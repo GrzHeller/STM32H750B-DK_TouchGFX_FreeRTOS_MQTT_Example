@@ -3,9 +3,9 @@ Created on: 30.11.2021
 
 # STM32H750B-DK_TouchGFX_FreeRTOS_MQTT_Example
 ## Introduction
-<p align="justify"> This is a guide on how to create a working MQTT application with TouchGFX on STM32H750B-DK development board.  
+<p align = "justify"> This is a guide on how to create a working MQTT application with TouchGFX on STM32H750B-DK development board.  
 This guide covers all issues I have encountered during the setup of my MQTT project.  
-I created this guide due to the lack of any comprehensive tutorials for STM32H750B-DK.  </div>
+I created this guide due to the lack of any comprehensive tutorials for STM32H750B-DK.  </p>
 
 ## Useful links
 ### STM32H750B-DK
@@ -52,3 +52,23 @@ https://github.com/eziya/STM32F4_HAL_ETH_MQTT_CLIENT
 Tutorial on LWIP MQTT by M.f.abouHASHEM:  
 https://www.youtube.com/watch?v=8P3_R6Xmhb0&t=2s  
 
+# 1. TouchGFX
+Start by creating a project for STM32H750B-DK by selecting the template.  
+<p align = "center"> <img src = "images/tgfx_project1.PNG" align = "middle" /> <img src = "images/tgfx_project2.PNG" align = "middle"  /> </p>
+Create a similar or the same interface.  
+<p align = "center"> <img src = "images/tgfx_interface1.PNG" align = "middle" /> </p>
+It is important to have the same resource names as here to avoid naming issues later.  
+<p align = "center"> <img src = "images/tgfx_resource_names1.PNG" align = "middle" /> </p>
+In order to get the zero and one images you have to put the attached zero.png and one.png files into your project images.  
+<p align = "center"> <img src = "images/tgfx_images1.PNG" align = "middle" /> </p>
+These two images should be hidden at the beginning, but it is not crucial.  
+<p align = "center"> <img src = "images/tgfx_visible1.PNG" align = "middle" /> </p>
+Create a wildcard for the textArea.  
+<p align = "center"> <img src = "images/tgfx_wildcard1.png" align = "middle" /> </p>
+To prevent issues it may be necessary to put a couple characters into wildcard typography.  
+<p align = "center"> <img src = "images/tgfx_typography1.PNG" align = "middle" /> </p>
+Create two interactions exactly like this.  
+<p align = "center"> <img src = "images/tgfx_interactions1.png" align = "middle" /> </p>
+Generate the code. If the white circle doesn't disappear after the first generation, generate again just to be safe.  
+
+# 2. CubeMX
