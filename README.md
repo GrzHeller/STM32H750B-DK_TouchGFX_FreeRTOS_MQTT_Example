@@ -3,9 +3,10 @@ Created on: 30.11.2021
 
 # STM32H750B-DK_TouchGFX_FreeRTOS_MQTT_Example
 ## Introduction
-<p align = "justify"> This is a guide on how to create a working MQTT application with TouchGFX on STM32H750B-DK development board.  
+This is a guide on how to create a working MQTT application with TouchGFX on STM32H750B-DK development board.  
 This guide covers all issues I have encountered during the setup of my MQTT project.  
-I created this guide due to the lack of any comprehensive tutorials for STM32H750B-DK.  </p>
+I created this guide due to the lack of any comprehensive tutorials on MQTT for STM32H750B-DK.  
+Follow these instructions carefully and exactly as specified, otherwise you will encounter issues, for example naming conflicts.  
 
 ## Useful links
 ### STM32H750B-DK
@@ -46,7 +47,7 @@ https://forums.freertos.org/t/why-does-rand-or-random-return-0-in-threads-but-is
 Official LWIP MQTT docs:  
 https://www.nongnu.org/lwip/2_0_x/group__mqtt.html  
 
-Tutorial on Paho MQTT by eziya:  
+Tutorial on paho MQTT by eziya:  
 https://github.com/eziya/STM32F4_HAL_ETH_MQTT_CLIENT  
 
 Tutorial on LWIP MQTT by M.f.abouHASHEM:  
@@ -55,17 +56,17 @@ https://www.youtube.com/watch?v=8P3_R6Xmhb0&t=2s
 # 1. TouchGFX
 Start by creating a project for STM32H750B-DK by selecting the template.  
 <p align = "center"> <img src = "images/tgfx_project1.PNG" align = "middle" /> <img src = "images/tgfx_project2.PNG" align = "middle"  /> </p>
-Create a similar or the same interface.  
+Create a similar interface.  
 <p align = "center"> <img src = "images/tgfx_interface1.PNG" align = "middle" /> </p>
 It is important to have the same resource names as here to avoid naming issues later.  
 <p align = "center"> <img src = "images/tgfx_resource_names1.PNG" align = "middle" /> </p>
 In order to get the zero and one images you have to put the attached zero.png and one.png files into your project images.  
 <p align = "center"> <img src = "images/tgfx_images1.PNG" align = "middle" /> </p>
-These two images should be hidden at the beginning, but it is not crucial.  
+These two images should be hidden by default, but it is not crucial.  
 <p align = "center"> <img src = "images/tgfx_visible1.PNG" align = "middle" /> </p>
 Create a wildcard for the textArea.  
 <p align = "center"> <img src = "images/tgfx_wildcard1.png" align = "middle" /> </p>
-To prevent issues it may be necessary to put a couple characters into wildcard typography.  
+To prevent issues it may be necessary to put a couple characters into the wildcard typography.  
 <p align = "center"> <img src = "images/tgfx_typography1.PNG" align = "middle" /> </p>
 Create two interactions exactly like this.  
 <p align = "center"> <img src = "images/tgfx_interactions1.png" align = "middle" /> </p>
