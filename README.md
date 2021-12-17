@@ -1,5 +1,6 @@
 Author: Grzegorz Heller  
 Created on: 30.11.2021  
+Updated on: 17.12.2021
 
 # STM32H750B-DK_TouchGFX_FreeRTOS_MQTT_Example
 ## Introduction
@@ -7,6 +8,7 @@ This is a guide on how to create a working MQTT application with TouchGFX on STM
 This guide covers all issues I have encountered during the setup of my MQTT project.  
 I created this guide due to the lack of any comprehensive tutorials on MQTT for STM32H750B-DK.  
 Follow these instructions carefully and exactly as specified, otherwise you will encounter issues, for example naming conflicts.  
+This guide assumes you know your way around the used tools.  
 
 ## Useful links
 ### STM32H750B-DK
@@ -76,3 +78,24 @@ Create two interactions exactly like this.
 Generate the code. If the white circle doesn't disappear after the first generation, generate again just to be safe.  
 
 # 2. CubeMX
+Import the Cube project by going to STM32CubeIDE folder inside the root folder of your TouchGFX project and launching the .cproject or .project file.  
+Open the .ioc file from withing the workspace. The order of the following steps should not matter much.  
+Enabling the ETHERNET module in Connectivity tab is prevented by pin conflict. This can be "fixed" by unassigning the PA2 pin labeled LCD_RESET. I do not know whether the role of LCD_RESET could be assigned to another pin and was not interested in finding out yet.  
+<p align = "center"> <img src = "images/mx_gpio.PNG" align = "middle" /> </p>
+Now we can enable ETHERNET module. Also enable Ethernet global interrupt with Preemption Priority 5.  
+<p align = "center"> <img src = "images/mx_ethernet.PNG" align = "middle" /> </p>
+<p align = "center"> <img src = "images/mx_nvic.PNG" align = "middle" /> </p>
+You should be careful with this module's pinout as some users reported the default one could be wrong. If you are unsure, check the datasheet/schematic of your board. Assuming you are using the same board as me, you should be fine with my settings.  
+<p align = "center"> <img src = "images/mx_ethernet_gpio.PNG" align = "middle" /> </p>
+Now enter CORTEX_M7 in System Core and add these two sections.  
+<p align = "center"> <img src = "images/mx_cortex.PNG" align = "middle" /> </p>
+Enable LWIP. Thus far I have been using static IP address. Set the IP address of the device.  
+<p align = "center"> <img src = "images/mx_lwip_general.PNG" align = "middle" /> </p>
+Set the MEM_SIZE and LWIP_RAM_HEAP_POINTER as shown below.  
+<p align = "center"> <img src = "images/mx_lwip_key.PNG" align = "middle" /> </p>
+Lastly set the platform.  
+<p align = "center"> <img src = "images/mx_lwip_platform.PNG" align = "middle" /> </p>
+If you want to use "Generate peripheral initialization as a pair of '.c/.h' files per peripheral" option, consult useful links section.  
+Generate the code.  
+
+# 2. CubeIDE
