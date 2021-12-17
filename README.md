@@ -1,14 +1,15 @@
 Author: Grzegorz Heller  
 Created on: 30.11.2021  
-Updated on: 17.12.2021
+Updated on: 17.12.2021  
+Tested and found working on:  
+
+CubeIDE version:  
+CubeMX version:  
+TouchGFX version:  
 
 # STM32H750B-DK_TouchGFX_FreeRTOS_MQTT_Example
 ## Introduction
-This is a guide on how to create a working MQTT application with TouchGFX on STM32H750B-DK development board.  
-This guide covers all issues I have encountered during the setup of my MQTT project.  
-I created this guide due to the lack of any comprehensive tutorials on MQTT for STM32H750B-DK.  
-Follow these instructions carefully and exactly as specified, otherwise you will encounter issues, for example naming conflicts.  
-This guide assumes you know your way around the used tools.  
+This is a guide on how to create a working MQTT application with TouchGFX on STM32H750B-DK development board. This guide covers all issues I have encountered during the setup of my MQTT project so that you will hopefully be able to painlessly create a working sample project and go from there. I created this guide due to the lack of any comprehensive tutorials on MQTT for STM32H750B-DK I have found. Follow these instructions carefully and exactly as specified, otherwise you will encounter issues, for example naming conflicts or hardfaults. This guide assumes you know your way around the used tools. I won't be explaining much here. If you wish to know why I did what I did, please consult the useful links section. If you find a step unclear and do not know how to follow, find any other issues or have suggestions, feel free to contact me here: grzegorz4heller@gmail.com.  
 
 ## Useful links
 ### STM32H750B-DK
@@ -104,4 +105,23 @@ Create three queues used to communicate between MQTT and TGFX tasks.
 If you want to use "Generate peripheral initialization as a pair of '.c/.h' files per peripheral" option, consult useful links section.  
 Generate the code.  
 
-# 2. CubeIDE
+# 3. CubeIDE
+This is the most important part which also caused me the most trouble.  
+There are three very important steps we should do first here. Firstly, let's make the appropriate changes to the FLASH.ld file. Add the following section to the file.  
+<p align = "center"> <img src = "images/ide_flashld.PNG" align = "middle" /> </p>
+These addresses correspond to the sections we have set in CORTEX_M7 in MX.  
+The PINGREQ functionality is disabled by default. This might be an overlook from ST's part. To enable it, find lwipopts.h file and add the following line into the user code section.  
+<p align = "center"> <img src = "images/ide_lwipopts.PNG" align = "middle" /> </p>
+This way we overwrite the macro that is set by default in opt.h file with a wrong value (for our purpose) and also prevent CubeMX from deleting this change on regeneration if we set the value directly in opt.h file. The increase of this value by 1 is necessary to enable sys timeouts accounting for MQTT, which in turn is necessary to enable automatic PINGREQ functionality required by the MQTT standard.  
+Last important thing to do is to remove the sysmem.c file from the project. This file's code causes issues with code reentrancy, which invariably causes hardfault errors in this project.  
+
+After all this you should be able to overwrite your project files with the files provided here, build the project and run the example application on your board.  
+
+# 4. Windows 10
+Testing the application with static IP requires you to make some changes in your Ethernet configuration.  
+<p align = "center"> <img src = "images/windows_ethernet.PNG" align = "middle" /> </p>
+Upon connecting your device to the PC over LAN, a network should be created, allowing to start up a broker under the gateway address we have set up in CubeMX. This step may be troublesome, because the network doesn't always change to the gateway address we have set. Just try until you succeed.  
+If everything went as planned, you now should be able to see something like this after pressing the Subscribe button. Your device should also be sending PINGREQ message about every 10 seconds (this is it's keep alive time).  
+<p align = "center"> <img src = "images/windows_mosquitto.PNG" align = "middle" /> </p>
+Just to be safe I have also provided my Mosquitto configuration file. To run Mosquitto with a configuration file, use this command with the path to your configuration file:  
+mosquitto -c c:\mosquitto\configuration.conf -v  
