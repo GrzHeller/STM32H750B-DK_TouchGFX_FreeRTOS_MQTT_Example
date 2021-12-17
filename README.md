@@ -26,6 +26,9 @@ https://www.youtube.com/watch?v=9QDWti5RzBU
 Tutorial on creating a more advanced GUI application with TouchGFX by EE by Karl:  
 https://www.youtube.com/watch?v=uE6eiTjOP-g  
 
+How to enable "Generate peripheral initialization as a pair of '.c/.h' files per peripheral" without getting a white screen:  
+https://community.st.com/s/question/0D53W00001DkHUrSAN/white-screen-after-checking-generate-peripheral-initialization-as-a-pair-of-ch-files-per-peripheral-in-cubemx  
+
 ### Ethernet and LWIP
 Tutorial on Ethernet configuration by Controllers Tech:  
 https://www.youtube.com/watch?v=8r8w6mgSn1A  
