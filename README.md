@@ -93,8 +93,14 @@ Enable LWIP. Thus far I have been using static IP address. Set the IP address of
 <p align = "center"> <img src = "images/mx_lwip_general.PNG" align = "middle" /> </p>
 Set the MEM_SIZE and LWIP_RAM_HEAP_POINTER as shown below.  
 <p align = "center"> <img src = "images/mx_lwip_key.PNG" align = "middle" /> </p>
-Lastly set the platform.  
+Set the platform.  
 <p align = "center"> <img src = "images/mx_lwip_platform.PNG" align = "middle" /> </p>
+Increase the MINIMAL_STACK_SIZE of FreeRTOS just in case.  
+<p align = "center"> <img src = "images/mx_freertos_config.PNG" align = "middle" /> </p>
+I prefer enabling NEWLIB to prevent the annoying warning.  
+<p align = "center"> <img src = "images/mx_freertos_newlib.PNG" align = "middle" /> </p>
+Create three queues used to communicate between MQTT and TGFX tasks.  
+<p align = "center"> <img src = "images/mx_freertos_queues.PNG" align = "middle" /> </p>
 If you want to use "Generate peripheral initialization as a pair of '.c/.h' files per peripheral" option, consult useful links section.  
 Generate the code.  
 
