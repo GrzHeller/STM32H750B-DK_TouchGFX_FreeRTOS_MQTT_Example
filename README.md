@@ -7,6 +7,8 @@ CubeIDE version:
 CubeMX version:  
 TouchGFX version:  
 
+Video demonstration: https://youtu.be/hxHlEgOlPiU
+
 # STM32H750B-DK_TouchGFX_FreeRTOS_MQTT_Example
 ## Introduction
 <p align = "justify"> This is a guide on how to create a working MQTT application with TouchGFX on STM32H750B-DK development board. This guide covers all issues I have encountered during the setup of my MQTT project so that you will hopefully be able to painlessly create a working sample project and go from there. I created this guide due to the lack of any comprehensive tutorials on MQTT for STM32H750B-DK I have found. Follow these instructions carefully and exactly as specified, otherwise you will encounter issues, for example naming conflicts or hardfaults. This guide assumes you know your way around the used tools. I won't be explaining much here. If you wish to know why I did what I did, please consult the useful links section. If you find a step unclear and do not know how to follow, find any other issues or have suggestions, feel free to contact me here: grzegorz4heller@gmail.com. </p>
