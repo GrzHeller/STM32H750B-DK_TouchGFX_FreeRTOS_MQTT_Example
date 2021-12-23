@@ -1,11 +1,11 @@
 Author: Grzegorz Heller  
 Created on: 30.11.2021  
-Updated on: 17.12.2021  
-Tested and found working on:  
+Updated on: 23.12.2021  
+Tested and found working on: 23.12.2021  
 
-CubeIDE version:  
-CubeMX version:  
-TouchGFX version:  
+CubeIDE version: 1.8.0  
+CubeMX version: 6.4.0  
+TouchGFX version: 4.18.1  
 
 Video demonstration: https://youtu.be/hxHlEgOlPiU
 
@@ -81,7 +81,7 @@ Create two interactions exactly like this.
 Generate the code. If the white circle doesn't disappear after the first generation, generate again just to be safe.  
 
 # 2. CubeMX
-<p align = "justify"> Import the Cube project by going to STM32CubeIDE folder inside the root folder of your TouchGFX project and launching the .cproject or .project file. Open the .ioc file from withing the workspace. The order of the following steps should not matter much. </p>
+<p align = "justify"> Import the Cube project by going to STM32CubeIDE folder inside the root folder of your TouchGFX project and launching the .cproject or .project file. Open the .ioc file from within the workspace. The order of the following steps should not matter much. </p>
 
 <p align = "justify"> Enabling the ETHERNET module in Connectivity tab is prevented by pin conflict. This can be "fixed" by unassigning the PA2 pin labeled LCD_RESET. I do not know whether the role of LCD_RESET could be assigned to another pin and was not interested in finding out yet. </p>
 <p align = "center"> <img src = "images/mx_gpio.PNG" align = "middle" /> </p>
@@ -92,7 +92,7 @@ Generate the code. If the white circle doesn't disappear after the first generat
 <p align = "center"> <img src = "images/mx_ethernet_gpio.PNG" align = "middle" /> </p>
 <p align = "justify"> Now enter CORTEX_M7 in System Core and add these two sections. </p>
 <p align = "center"> <img src = "images/mx_cortex.PNG" align = "middle" /> </p>
-<p align = "justify"> Enable LWIP. Thus far I have been using static IP address. Set the IP address of the device. </p>
+<p align = "justify"> Enable LWIP. Thus far I have been using static IP address. Set the IP address of the device. Depending on your local network you might need to adjust this and remember about changing some code.</p>
 <p align = "center"> <img src = "images/mx_lwip_general.PNG" align = "middle" /> </p>
 <p align = "justify"> Set the MEM_SIZE and LWIP_RAM_HEAP_POINTER as shown below. </p>
 <p align = "center"> <img src = "images/mx_lwip_key.PNG" align = "middle" /> </p>
@@ -109,15 +109,46 @@ Generate the code. If the white circle doesn't disappear after the first generat
 # 3. CubeIDE
 <p align = "justify"> This is the part which caused me the most trouble. There are three very important steps we should do first here. Firstly, let's make the appropriate changes to the FLASH.ld file. Add the following section to the file. </p>
 <p align = "center"> <img src = "images/ide_flashld.PNG" align = "middle" /> </p>
-<p align = "justify"> These addresses correspond to the sections we have set in CORTEX_M7 in MX. </p>
 
-<p align = "justify"> The PINGREQ functionality is disabled by default. This might be an overlook from ST's part. To enable it, find lwipopts.h file and add the following line into the user code section. </p>
-<p align = "center"> <img src = "images/ide_lwipopts.PNG" align = "middle" /> </p>
-<p align = "justify"> This way we overwrite the macro that is set by default in opt.h file with a wrong value (for our purpose) and also prevent CubeMX from deleting this change on regeneration if we set the value directly in opt.h file. The increase of this value by 1 is necessary to enable sys timeouts accounting for MQTT, which in turn is necessary to enable automatic PINGREQ functionality required by the MQTT standard. </p>
+      /* Modification start \*/
+      .lwip_sec (NOLOAD) : {
+        . = ABSOLUTE(0X30040000);
+        *(.RxDecripSection)
+    
+        . = ABSOLUTE(0X30040060);
+        *(.TxDecripSection)
+    
+        . = ABSOLUTE(0X30040200);
+        *(.RxArraySection)
+      } >RAM_D2
+      /* Modification end */
+
+<p align = "justify"> These addresses correspond to the sections we have set in CORTEX_M7 in MX. You can find them specified in ethernetif.c file. </p>
+
+<p align = "justify"> The PINGREQ functionality is disabled by default. To enable it, find lwipopts.h file (lwip.c -> opt.h -> lwipopts.h) and add the following lines into the user code section. </p>
+
+    /* USER CODE BEGIN 0 */
+    #define LWIP_TCP				1
+    #define IP_REASSEMBLY			1
+    #define LWIP_ARP				1
+    #define LWIP_DHCP				0
+    #define LWIP_AUTOIP				0
+    #define LWIP_IGMP				0
+    #define LWIP_DNS				0
+    #define PPP_NUM_TIMEOUTS		0
+    #define LWIP_IPV6				0
+    #define LWIP_IPV6_REASS			LWIP_IPV6
+    #define LWIP_IPV6_MLD			LWIP_IPV6
+    #define MEMP_NUM_SYS_TIMEOUT	((LWIP_TCP + IP_REASSEMBLY + LWIP_ARP + (2*LWIP_DHCP) + LWIP_AUTOIP + LWIP_IGMP + LWIP_DNS + PPP_NUM_TIMEOUTS + (LWIP_IPV6 * (1 + LWIP_IPV6_REASS + LWIP_IPV6_MLD))) + 1)
+	/* USER CODE END 0 */
+
+<p align = "justify"> This way we overwrite the macro that is set by default in opt.h file with a wrong value (for our purpose) and also prevent CubeMX from deleting this change on regeneration if we set the value directly in opt.h file. The increase of MEMP_NUM_SYS_TIMEOUT value by 1 is necessary to enable sys timeouts accounting for MQTT, which in turn is necessary to enable automatic PINGREQ functionality required by the MQTT standard. </p>
+
+<p align = "justify"> Please remember that after extending this project these values might change. You should be aware of what modules you enable, but you can always double check yourself by finding these defines in opt.h which will always be generated based on your MX settings. </p>
 
 <p align = "justify"> Last important thing to do is to remove the sysmem.c file from the project. This file's code causes issues with code reentrancy, which invariably causes hardfault errors in this project. <p>
 
-<p align = "justify"> After all this you can overwrite your project files with the files provided here. I have found it necessary to always regenerate the project inside TouchGFX before building and uploading the code onto my device, especially after regenerating the code in CubeMX. This however might not actually be necessary. Build the project and run the code on your board. </p>
+<p align = "justify"> After all this you can overwrite your project files with the files provided here. Remember to add the new MQTT folder into the include path. I have found it necessary to always regenerate the project inside TouchGFX before building and uploading the code onto my device, especially after regenerating the code in CubeMX. This however might not actually be necessary. Build the project and run the code on your board. </p>
 
 # 4. Windows 10
 <p align = "justify"> Testing the application with static IP requires you to make some changes in your Ethernet configuration. </p>
@@ -128,4 +159,4 @@ Generate the code. If the white circle doesn't disappear after the first generat
 mosquitto -c c:\mosquitto\configuration.conf -v </p>
 
 # 5. Conclusion
-<p align = "justify"> Hopefully you now have a very basic, but working device utilising MQTT communication and a project that did not cost you hours of your time figuring out why something doesn't work. You can analyse the code provided by me or look into the links provided by me to find out more and go from there. </p>
+<p align = "justify"> Hopefully you now have a very basic, but working device utilising MQTT communication and a project that did not cost you hours of your time figuring out why something doesn't work. You can analyse the code or look into the provided links to find out more and go from there. </p>
