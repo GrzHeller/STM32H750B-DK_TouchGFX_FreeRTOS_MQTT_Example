@@ -29,11 +29,7 @@
 #include "stm32h750b_discovery_qspi.h"
 #include "stm32h750b_discovery_sdram.h"
 #include "MQTT_Interface.h"
-
-#include <string.h>
-#include "lwip/api.h"
-#include "task.h"
-#include "queue.h"
+#include "string.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,7 +39,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -71,7 +66,7 @@ SDRAM_HandleTypeDef hsdram2;
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 516 * 4,
+  .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for GUITask */
@@ -178,7 +173,7 @@ int main(void)
   MX_MDMA_Init();
   MX_TouchGFX_Init();
   /* USER CODE BEGIN 2 */
-	printf("Don't remove this printf to prevent hard fault.\r\n");
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
