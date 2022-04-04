@@ -135,6 +135,7 @@ Generate the code. If the white circle doesn't disappear after the first generat
 <p align = "justify"> Please remember that after extending this project these values might change. You should be aware of what modules you enable, but you can always double check yourself by finding these defines in opt.h/lwipopts.h which will always be generated based on your MX settings. </p>
 
 <p align = "justify"> Last important thing to do is to remove the sysmem.c file from the project. This file's code causes issues with code reentrancy, which invariably causes hardfault errors in this project. <p>
+<p align = "center"> <img src = "images/ide_sysmem.PNG" align = "middle" /> </p>
 
 <p align = "justify"> After all this you can overwrite your project files with the files provided here. Remember to add the new MQTT folder into the include path. Build the project and run the code on your board. </p>
 
