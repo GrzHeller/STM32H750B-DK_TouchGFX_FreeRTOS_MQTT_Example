@@ -83,7 +83,7 @@ Generate the code. If the white circle doesn't disappear after the first generat
 # 2. CubeMX
 <p align = "justify"> Import the Cube project by going to STM32CubeIDE folder inside the root folder of your TouchGFX project and launching the .cproject or .project file. Open the .ioc file from within the workspace. The order of the following steps should not matter much. </p>
 
-<p align = "justify"> Enabling the ETHERNET module in Connectivity tab is prevented by pin conflict. This can be "fixed" by unassigning the PA2 pin labeled LCD_RESET. I do not know whether the role of LCD_RESET could be assigned to another pin and was not interested in finding out yet. </p>
+<p align = "justify"> Enabling the ETHERNET module in Connectivity tab is prevented by pin conflict. This can be "fixed" by unassigning the PA2 pin labeled LCD_RESET. </p>
 <p align = "center"> <img src = "images/mx_gpio.PNG" align = "middle" /> </p>
 <p align = "justify"> Now we can enable ETHERNET module. Also enable Ethernet global interrupt with Preemption Priority 5. </p>
 <p align = "center"> <img src = "images/mx_ethernet.PNG" align = "middle" /> </p>
@@ -92,7 +92,7 @@ Generate the code. If the white circle doesn't disappear after the first generat
 <p align = "center"> <img src = "images/mx_ethernet_gpio.PNG" align = "middle" /> </p>
 <p align = "justify"> Now enter CORTEX_M7 in System Core and add these two sections. </p>
 <p align = "center"> <img src = "images/mx_cortex.PNG" align = "middle" /> </p>
-<p align = "justify"> Enable LWIP. Thus far I have been using static IP address. Set the IP address of the device. Depending on your local network you might need to adjust this and remember about changing some code.</p>
+<p align = "justify"> Enable LWIP. At first I have been using static IP address as shown on the screenshot and the code provided here is written to accommodate that. However I have switched to DHCP later. If you want to follow this guide 1:1, set the static IP address of the device. Depending on your local network you might need to adjust this and remember about changing some code. </p>
 <p align = "center"> <img src = "images/mx_lwip_general.PNG" align = "middle" /> </p>
 <p align = "justify"> Set the MEM_SIZE and LWIP_RAM_HEAP_POINTER as shown below. </p>
 <p align = "center"> <img src = "images/mx_lwip_key.PNG" align = "middle" /> </p>
@@ -110,7 +110,7 @@ Generate the code. If the white circle doesn't disappear after the first generat
 <p align = "justify"> This is the part which caused me the most trouble. There are three very important steps we should do first here. Firstly, let's make the appropriate changes to the FLASH.ld file. Add the following section to the file. </p>
 <p align = "center"> <img src = "images/ide_flashld.PNG" align = "middle" /> </p>
 
-      /* Modification start \*/
+      /* Modification start */
       .lwip_sec (NOLOAD) : {
         . = ABSOLUTE(0X30040000);
         *(.RxDecripSection)
@@ -125,38 +125,27 @@ Generate the code. If the white circle doesn't disappear after the first generat
 
 <p align = "justify"> These addresses correspond to the sections we have set in CORTEX_M7 in MX. You can find them specified in ethernetif.c file. </p>
 
-<p align = "justify"> The PINGREQ functionality is disabled by default. To enable it, find lwipopts.h file (lwip.c -> opt.h -> lwipopts.h) and add the following lines into the user code section. </p>
+<p align = "justify"> The PINGREQ functionality is disabled by default. To enable it, find lwipopts.h file (lwip.h -> opt.h -> lwipopts.h) and redefine the MEMP_NUM_SYS_TIMEOUT macro as follows in the user code section 1 at the end of the file. The value of this define depends on your configuration. Generally, the PINGREQ should work if you increase the value defined in lwipopts.h by 1. My default value was 5, this is why I'm redefining it as 6. </p>
 
     /* USER CODE BEGIN 0 */
-    #define LWIP_TCP				1
-    #define IP_REASSEMBLY			1
-    #define LWIP_ARP				1
-    #define LWIP_DHCP				0
-    #define LWIP_AUTOIP				0
-    #define LWIP_IGMP				0
-    #define LWIP_DNS				0
-    #define PPP_NUM_TIMEOUTS		0
-    #define LWIP_IPV6				0
-    #define LWIP_IPV6_REASS			LWIP_IPV6
-    #define LWIP_IPV6_MLD			LWIP_IPV6
-    #define MEMP_NUM_SYS_TIMEOUT	((LWIP_TCP + IP_REASSEMBLY + LWIP_ARP + (2*LWIP_DHCP) + LWIP_AUTOIP + LWIP_IGMP + LWIP_DNS + PPP_NUM_TIMEOUTS + (LWIP_IPV6 * (1 + LWIP_IPV6_REASS + LWIP_IPV6_MLD))) + 1)
+    #undef MEMP_NUM_SYS_TIMEOUT
+    #define MEMP_NUM_SYS_TIMEOUT 6
 	/* USER CODE END 0 */
-
-<p align = "justify"> This way we overwrite the macro that is set by default in opt.h file with a wrong value (for our purpose) and also prevent CubeMX from deleting this change on regeneration if we set the value directly in opt.h file. The increase of MEMP_NUM_SYS_TIMEOUT value by 1 is necessary to enable sys timeouts accounting for MQTT, which in turn is necessary to enable automatic PINGREQ functionality required by the MQTT standard. </p>
 
 <p align = "justify"> Please remember that after extending this project these values might change. You should be aware of what modules you enable, but you can always double check yourself by finding these defines in opt.h which will always be generated based on your MX settings. </p>
 
 <p align = "justify"> Last important thing to do is to remove the sysmem.c file from the project. This file's code causes issues with code reentrancy, which invariably causes hardfault errors in this project. <p>
 
-<p align = "justify"> After all this you can overwrite your project files with the files provided here. Remember to add the new MQTT folder into the include path. I have found it necessary to always regenerate the project inside TouchGFX before building and uploading the code onto my device, especially after regenerating the code in CubeMX. This however might not actually be necessary. Build the project and run the code on your board. </p>
+<p align = "justify"> After all this you can overwrite your project files with the files provided here. Remember to add the new MQTT folder into the include path. Build the project and run the code on your board. </p>
 
 # 4. Windows 10
 <p align = "justify"> Testing the application with static IP requires you to make some changes in your Ethernet configuration. </p>
 <p align = "center"> <img src = "images/windows_ethernet.PNG" align = "middle" /> </p>
-<p align = "justify"> Upon connecting your device to the PC over LAN, a network should be created, allowing to start up a broker under the gateway address we have set up in CubeMX. This step may be troublesome, because the network doesn't always change to the gateway address we have set. Just try until you succeed. If everything went as planned, you now should be able to see something like this after pressing the Subscribe button. Your device should also be sending PINGREQ message about every 10 seconds (this is it's keep alive time). </p>
+<p align = "justify"> Upon connecting your device to the PC over LAN, a network should be created, allowing to start up a broker under the gateway address we have set up in CubeMX. This step may be troublesome, because the network doesn't always change to the gateway address we have set. I don't know how to make it work immediately. Just try until you succeed. If everything went as planned, you now should be able to see something like this after pressing the Subscribe button. Your device should also be sending PINGREQ message about every 10 seconds (this is it's keep alive time). </p>
 <p align = "center"> <img src = "images/windows_mosquitto.PNG" align = "middle" /> </p>
 <p align = "justify"> Just to be safe I have also provided my Mosquitto configuration file. To run Mosquitto with a configuration file, use this command with the path to your configuration file: <br>
 mosquitto -c c:\mosquitto\configuration.conf -v </p>
+<p align = "justify"> Alternatively, if you are using DHCP, change the IP address to 0.0.0.0 in the config file provided. Remember to change the broker IP in the MQTT_Interface.c file to the IP of the machine you are running the broker on. Connect the board to your router. </p>
 
 # 5. Conclusion
 <p align = "justify"> Hopefully you now have a very basic, but working device utilising MQTT communication and a project that did not cost you hours of your time figuring out why something doesn't work. You can analyse the code or look into the provided links to find out more and go from there. </p>
