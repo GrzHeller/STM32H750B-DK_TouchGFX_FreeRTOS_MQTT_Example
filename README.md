@@ -79,11 +79,11 @@ https://chowdera.com/2022/01/202201061820128535.html
 <p align = "center"> <img src = "images/tgfx_interface.PNG" align = "middle" /> </p>
 <p align = "justify"> It is important to have the same resource names as here to avoid naming issues later. Remember to change the screen name too! </p>
 <p align = "center"> <img src = "images/tgfx_names.PNG" align = "middle" /> </p>
-<p align = "justify"> In order to get the zero and one images you have to put the attached zero.png and one.png files into your project images using the + button. </p>
+<p align = "justify"> In order to get the zero and one images you have to put the attached zero.png and one.png files into your project images using the + button in upper right corner. </p>
 <p align = "center"> <img src = "images/tgfx_images.PNG" align = "middle" /> </p>
 <p align = "justify"> These two images should be hidden by default, but it is not crucial. </p>
 <p align = "center"> <img src = "images/tgfx_hidden.PNG" align = "middle" /> </p>
-<p align = "justify"> Create a wildcard for the textArea. The buffer size should be 4, because the longest word we will put into it is "yes" and we need to add one more character to it, the null terminator "\0". </p>
+<p align = "justify"> Create a wildcard for the textArea. The buffer size should be 4, because the longest word we will put into it is "yes" and we need to add one more character to it, the null terminator "\0", which results in buffer length of 4. </p>
 <p align = "center"> <img src = "images/tgfx_wildcard.PNG" align = "middle" /> </p>
 <p align = "justify"> We are using the Default typography here. In order to change text on runtime, we have to edit the typography, because the necessary characters have to be generated. That's why we have to type in the Wildcard Characters we want to use on runtime. </p>
 <p align = "center"> <img src = "images/tgfx_typography.PNG" align = "middle" /> </p>
@@ -96,19 +96,18 @@ https://chowdera.com/2022/01/202201061820128535.html
 <p align = "justify"> You can now close TouchGFX. </p>
 
 # 2. CubeMX
-<p align = "justify"> Import the Cube project by going to STM32CubeIDE folder inside the root folder of your whole project and launching the .cproject or .project file. Open the .ioc file from within the workspace. If you get prompted for migration to new version, don't do this by pressing Continue. </p>
-<p align = "center"> <img src = "images/mx_migration.PNG" align = "middle" /> </p>
+<p align = "justify"> Import the Cube project by going to STM32CubeIDE folder inside the root folder of your whole project and launching the .cproject file. Open the .ioc file from within the workspace. If you get prompted for migration to new version, you can either don't do this by pressing Continue, or update by pressing Migrate. I chose to Migrate because I know it won't mess up my project this time. Your experience may vary. </p>
+<p align = "center"> <img src = "images/mx_migrate.PNG" align = "middle" /> </p>
 <p align = "justify"> Enabling the Ethernet module in Connectivity section is prevented by pin conflict. This can be "fixed" by unassigning the PA2 pin labeled LCD_RESET. Simply find it on the pinout view and press Reset_State. </p>
 <p align = "center"> <img src = "images/mx_gpio.PNG" align = "middle" /> </p>
 <p align = "justify"> Now we can enable Ethernet module in the Connectivity section. Also enable Ethernet global interrupt with preemption priority 5 in the NVIC settings. </p>
 <p align = "center"> <img src = "images/mx_ethernet.PNG" align = "middle" /> </p>
-<p align = "center"> <img src = "images/mx_nvic.PNG" align = "middle" /> </p>
 <p align = "justify"> You should be careful with this module's pinout as some users reported the default one could be wrong. If you are unsure, check the datasheet/schematic of your board. Assuming you are using the same board as me, you should be fine with my settings. </p>
 <p align = "center"> <img src = "images/mx_ethernet_gpio.PNG" align = "middle" /> </p>
-<p align = "justify"> Now enter CORTEX_M7 in System Core section and add these two regions. Pay attention to MPU Region Size. </p>
-<p align = "center"> <img src = "images/mx_cortex1.PNG" align = "middle" /> </p>
-<p align = "justify"> Enable LWIP in Middlewares section. There are two routes here. The first one is the easier one - enabling DHCP. If you can use it, I see no point in not using it. The second route is setting a static IP. I will explain how to do this after explaining the DHCP. Also enable the LWIP_DNS no matter if you use DHCP or static IP. </p>
-<p align = "center"> <img src = "images/mx_lwip_general1.PNG" align = "middle" /> </p>
+<p align = "justify"> Now enter CORTEX_M7 in System Core section and add these two regions. Pay attention to the MPU Region Size. </p>
+<p align = "center"> <img src = "images/mx_cortex.PNG" align = "middle" /> </p>
+<p align = "justify"> Enable LWIP in Middleware section. There are two routes here. The first one is the easier one - enabling DHCP. If you can use it, I see no point in not using it. The second route is setting a static IP. I will explain how to do this after explaining the DHCP. Also enable the LWIP_DNS no matter if you use DHCP or static IP. </p>
+<p align = "center"> <img src = "images/mx_lwip_general.PNG" align = "middle" /> </p>
 <p align = "justify"> In key options, enable the Show Advanced Parameters in the top right corner. Set the MEM_SIZE and LWIP_RAM_HEAP_POINTER as shown below. </p>
 <p align = "center"> <img src = "images/mx_lwip_key1.PNG" align = "middle" /> </p>
 <p align = "justify"> This part is very important for MQTT. We have to increase the MEMP_NUM_SYS_TIMEOUT by 1 in order to enable the cyclic timer responsible for MQTT Keep Alive functionality. In my case the description says the minimal value should be 6, so I set it to 7. </p>
@@ -116,12 +115,14 @@ https://chowdera.com/2022/01/202201061820128535.html
 <p align = "justify"> Set the platform. </p>
 <p align = "center"> <img src = "images/mx_lwip_platform.PNG" align = "middle" /> </p>
 <p align = "justify"> Increase the MINIMAL_STACK_SIZE of FreeRTOS just in case. </p>
-<p align = "center"> <img src = "images/mx_freertos_config.PNG" align = "middle" /> </p>
-<p align = "justify"> Enable USE_NEWLIB_REENTRANT. </p>
+<p align = "center"> <img src = "images/mx_freertos.PNG" align = "middle" /> </p>
+<p align = "justify"> Enable USE_NEWLIB_REENTRANT in Advanced settings. </p>
 <p align = "center"> <img src = "images/mx_freertos_newlib.PNG" align = "middle" /> </p>
 <p align = "justify"> Create three queues used to communicate between MQTT and TGFX tasks. </p>
 <p align = "center"> <img src = "images/mx_freertos_queues.PNG" align = "middle" /> </p>
-<p align = "justify"> If you want to use "Generate peripheral initialization as a pair of '.c/.h' files per peripheral" option, consult useful links section. Generate the code. </p>
+<p align = "justify"> I will be using generate peripheral initialization as a pair of '.c/.h' files per peripheral option and I recommend doing the same to avoid extremely large size of main.c. The code I am providing is also written with this option in mind. This however requires us to take additional action, which I will be explaining in a moment. You can also read about it in useful links section. So, before you generate the code, backup your main.c file! This file is located in Root/Core/Src folder. It is also important to note that there is a bug causing this option to be disabled randomly. Well, it isn't exactly random but I haven't found out what causes it yet. So every time you want to regenerate the code in MX, check if this option is enabled! Otherwise it will mess up your project. </p>
+<p align = "center"> <img src = "images/mx_main.PNG" align = "middle" /> <img src = "images/mx_generate.PNG" align = "middle" /> </p>
+<p align = "justify"> Generate the code. You can turn off MX after. </p>
 
 # 3. CubeIDE
 <p align = "justify"> Include the .touchgfx file into your workspace by dragging it onto the project and selecting link to files. </p>
