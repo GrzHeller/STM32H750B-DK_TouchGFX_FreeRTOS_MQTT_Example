@@ -13,7 +13,7 @@ Video demonstration of older version of this demo: https://youtu.be/hxHlEgOlPiU
 
 # STM32H750B-DK_TouchGFX_FreeRTOS_MQTT_Example
 ## Introduction
-<p align = "justify"> This guide is a good starting point for creating an MQTT application with CubeIDE and TouchGFX on STM32H750B-DK development board. With adequate changes this will of course work also on other supported boards. I created this guide due to the lack of any comprehensive tutorials on MQTT for STM32H750B-DK that would work from the get-go. Due to the nature of this guide it is meant to be followed exactly as specified. This guide also assumes you know your way around the used tools, as I won't be going too in-depth. If you wish to know more, please consult the useful links section. If you find a step unclear and do not know how to follow, find any issues or have suggestions, feel free to contact me here: grzegorz4heller@gmail.com. </p>
+<p align = "justify"> This guide should be a good starting point for creating an MQTT application with CubeIDE and TouchGFX on STM32H750B-DK development board. With adequate changes this will of course work also on other supported boards. I created this guide due to the lack of any comprehensive tutorials on MQTT for STM32H750B-DK that would work from the get-go. Due to the nature of this guide it is meant to be followed exactly as specified. This guide also assumes you know your way around the used tools, as I won't be going too in-depth. If you wish to know more, please consult the useful links section. If you find a step unclear and do not know how to follow, find any issues or have suggestions, feel free to contact me here: grzegorz4heller@gmail.com. </p>
 
 <p align = "justify"> This guide will cover: </p>
 <p align = "justify"> - creating a simple GUI in TouchGFX, </p>
@@ -127,6 +127,8 @@ https://chowdera.com/2022/01/202201061820128535.html
 <p align = "center"> <img src = "images/mx_generate.PNG" align = "middle" /> </p>
 <p align = "justify"> Generate the code. You can turn off MX after. </p>
 
+## Static IP
+
 # 3. CubeIDE
 <p align = "justify"> Try building the project right away. If you get an error like below, set a flag in properties as per the screenshot. </p>
 <p align = "center"> <img src = "images/ide_errno.PNG" align = "middle" /> </p>
@@ -158,19 +160,22 @@ https://chowdera.com/2022/01/202201061820128535.html
 <p align = "justify"> These addresses correspond to the adressess we have set for Ethernet in MX. You can find them specified in ethernetif.c file. </p>
 <p align = "justify"> For better workflow, you can include the .touchgfx file into your workspace by dragging it onto the project and selecting link to files. You can then easily launch TouchGFX from within the workspace and run them simultaneously. </p>
 <p align = "center"> <img src = "images/ide_file_operation1.PNG" align = "middle" /> <img src = "images/ide_file_operation2.PNG" align = "middle"  /> </p>
-<p align = "justify"> Now comes an important step for Keep Alive functionality. This functionality is responsible for periodically pinging the broker and receiving ping response. The cyclic timer responsible for this is set by default to be called every 5 seconds. This creates issues if we set the Keep Alive time lower than at least twice this value. We can live with it if we're fine with it, or we can set the timer to be called more frequently. To do this we have to find the lwipopts.h file. Easiest way is to go this way: main.c -> lwip.h -> opt.h -> lwipopts.h. This file contains all custom settings for LWIP. We can set the MQTT_CYCLIC_TIMER_INTERVAL here to something else than 5. Let's set it to 2. The original value is set in mqtt_opts.h, but it is protected with #ifndef so don't worry about redefinition. Now our cyclic timer should be fired every 2 seconds, which means setting Keep Alive time to 5 seconds should cause no issues. You can also notice that the MEMP_NUM_SYS_TIMEOUT alongside other variables we have set in MX is also define in this file. </p>
+<p align = "justify"> Now comes an important step for Keep Alive functionality. This functionality is responsible for periodically pinging the broker and receiving ping response. The cyclic timer responsible for this is set by default to be called every 5 seconds. It is implemented in such a way that if time on current call is higher than Keep Alive, it will send a PINGREQ packet. However, if the time on current call is higher than 1.5 * Keep Alive, it will consider the server unresponsive and disconnect. You can analyze this funcion in mqtt.c, it's called mqtt_cyclic_timer. This creates issues if we set the Keep Alive time to a low value, because the device will disconnect itself if cyclic timer is too slow. Generally low values should be unnecessary, but we will set it low in this example. To make this work we have to find the lwipopts.h file. Easiest way is to go this way: main.c -> lwip.h -> opt.h -> lwipopts.h. This file contains all custom settings for LWIP. We can set the MQTT_CYCLIC_TIMER_INTERVAL here to something else than 5. Let's set it to 1. The original value is set in mqtt_opts.h, but it is protected with #ifndef so don't worry about redefinition. Now our cyclic timer should be fired every 1 second, which means setting Keep Alive time to 4 seconds should cause no issues. You can also notice that the MEMP_NUM_SYS_TIMEOUT alongside other variables we have set in MX is also defined in this file. </p>
 <p align = "center"> <img src = "images/ide_cyclic_timer.PNG" align = "middle" /> </p>
 <p align = "justify"> After all this you can overwrite your project files with the files provided. It should work from the get-go. Remember to add the new MQTT folder into the include path. Build the project and run the code on your board. </p>
 <p align = "center"> <img src = "images/ide_include_path.PNG" align = "middle" /> </p>
 
-# 4. Windows 10
-<p align = "justify"> Testing the application with static IP requires you to make some changes in your Ethernet configuration. </p>
-<p align = "center"> <img src = "images/windows_ethernet.PNG" align = "middle" /> </p>
-<p align = "justify"> Upon connecting your device to the PC over LAN, a network should be created, allowing to start up a broker under the gateway address we have set up in CubeMX. This step may be troublesome, because the network doesn't always change to the gateway address we have set. I don't know how to make it work immediately. Just try until you succeed. If everything went as planned, you now should be able to see something like this after pressing the Subscribe button. Your device should also be sending PINGREQ message about every 10 seconds (this is it's keep alive time). </p>
-<p align = "center"> <img src = "images/windows_mosquitto.PNG" align = "middle" /> </p>
-<p align = "justify"> Just to be safe I have also provided my Mosquitto configuration file. To run Mosquitto with a configuration file, use this command with the path to your configuration file: <br>
-mosquitto -c c:\mosquitto\configuration.conf -v </p>
-<p align = "justify"> Alternatively, if you are using DHCP, change the IP address to 0.0.0.0 in the config file provided. Remember to change the broker IP in the MQTT_Interface.c file to the IP of the machine you are running the broker on. Connect the board to your router. </p>
+## Static IP
+
+# 4. Testing
+<p align = "justify"> You have to have Mosquitto installed to test the device now. Alternatively you can go into MQTT_Interface.c and comment/uncomment adequate code sections to connect to test.mosquitto.org if you have a way of testing the connection there. You can write some code to publish a message and receive it on another subscribed client, for example MQTT Explorer. Testing the application should be simple. Just plug in the device into your router and press the Connect button. Your Mosquitto should display something like below. </p>
+<p align = "center"> <img src = "images/test_connect.PNG" align = "middle" /> </p>
+<p align = "justify"> After a couple of seconds you should see ping activity. </p>
+<p align = "center"> <img src = "images/test_ping.PNG" align = "middle" /> </p>
+<p align = "justify"> Pressing the disconnect button should result in a properly closed connection. </p>
+<p align = "center"> <img src = "images/test_disconnect.PNG" align = "middle" /> </p>
+<p align = "justify"> I have also provided my Mosquitto configuration file. To run Mosquitto with a configuration file, open CMD and navigate to your Mosquitto installation folder, then use this command with the path to your configuration file: <br>
+mosquitto -c d:\mosquitto\configuration.conf -v </p>
 
 # 5. Conclusion
-<p align = "justify"> Hopefully you now have a very basic, but working device utilising MQTT communication and a project that did not cost you hours of your time figuring out why something doesn't work. You can analyse the code or look into the provided links to find out more and go from there. </p>
+<p align = "justify"> Hopefully you now have a very basic, but working device utilising MQTT communication. You can now analyse the code and extend the project to suit your needs. </p>
