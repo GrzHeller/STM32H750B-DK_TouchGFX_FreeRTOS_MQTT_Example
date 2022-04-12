@@ -96,12 +96,14 @@ https://chowdera.com/2022/01/202201061820128535.html
 <p align = "justify"> You can now close TouchGFX. </p>
 
 # 2. CubeMX
-<p align = "justify"> Import the Cube project by going to STM32CubeIDE folder inside the root folder of your whole project and launching the .cproject file. Open the .ioc file from within the workspace. If you get prompted for migration to new version, you can either don't do this by pressing Continue, or update by pressing Migrate. I chose to Migrate because I know it won't mess up my project this time. Your experience may vary. </p>
+<p align = "justify"> Import the Cube project by going to STM32CubeIDE folder inside the root folder of your whole project and launching the .cproject file. Open the .ioc file from within the workspace. If you get prompted for migration to new version, don't do this by pressing Continue. I couldn't make this project work after migrating. </p>
 <p align = "center"> <img src = "images/mx_migrate.PNG" align = "middle" /> </p>
 <p align = "justify"> Enabling the Ethernet module in Connectivity section is prevented by pin conflict. This can be "fixed" by unassigning the PA2 pin labeled LCD_RESET. Simply find it on the pinout view and press Reset_State. </p>
 <p align = "center"> <img src = "images/mx_gpio.PNG" align = "middle" /> </p>
 <p align = "justify"> Now we can enable Ethernet module in the Connectivity section. Also enable Ethernet global interrupt with preemption priority 5 in the NVIC settings. </p>
 <p align = "center"> <img src = "images/mx_ethernet.PNG" align = "middle" /> </p>
+<p align = "justify"> Now check if your Parameter Settings are correct. </p>
+<p align = "center"> <img src = "images/mx_ethernet_parameters.PNG" align = "middle" /> </p>
 <p align = "justify"> You should be careful with this module's pinout as some users reported the default one could be wrong. If you are unsure, check the datasheet/schematic of your board. Assuming you are using the same board as me, you should be fine with my settings. </p>
 <p align = "center"> <img src = "images/mx_ethernet_gpio.PNG" align = "middle" /> </p>
 <p align = "justify"> Now enter CORTEX_M7 in System Core section and add these two regions. Pay attention to the MPU Region Size. </p>
@@ -126,9 +128,18 @@ https://chowdera.com/2022/01/202201061820128535.html
 <p align = "justify"> Generate the code. You can turn off MX after. </p>
 
 # 3. CubeIDE
-<p align = "justify"> Include the .touchgfx file into your workspace by dragging it onto the project and selecting link to files. </p>
-<p align = "center"> <img src = "images/ide_file_operation1.PNG" align = "middle" /> <img src = "images/ide_file_operation2.PNG" align = "middle"  /> </p>
-<p align = "justify"> This is the part which caused me the most trouble. There are three very important steps we should do first here. Firstly, let's make the appropriate changes to the FLASH.ld file. Add the following section to the file. </p>
+<p align = "justify"> Try building the project right away. If you get an error like below, set a flag in properties as per the screenshot. </p>
+<p align = "center"> <img src = "images/ide_errno.PNG" align = "middle" /> </p>
+<p align = "center"> <img src = "images/ide_flag.PNG" align = "middle"  /> </p>
+<p align = "justify"> The project should build nicely now, but if you try flashing the board with it, you will get a white screen. This is because of the peripheral initialization option we have enabled. This has caused the custom code provided by the TouchGFX template to disappear. We can put it back thanks to our backup of main.c. We won't have to do this a second time, unless you forget the bug I mentioned and generate the whole initialization back in main.c. Don't forget! </p>
+<p align = "justify"> I have provided the already completed files for this template. However I advise taking a look at how to do this yourself. Open your backup main.c and find every user code section with some code in it. You have to copy this code and put it back into adequate place. In case of this project, the sections are as follows: </p>
+<p align = "justify"> - USER CODE BEGIN Includes, one #include has to go to quadspi.c and one has to go to fmc.c, into sections called USER CODE BEGIN 0, </p>
+<p align = "justify"> - USER CODE BEGIN QUADSPI_Init 0, </p>
+<p align = "justify"> - USER CODE BEGIN QUADSPI_Init 2, </p>
+<p align = "justify"> - USER CODE BEGIN FMC_Init 2. </p>
+<p align = "justify"> With this out of the way, there are two more thing sto do in order to get rid of the white screen. We have to remove the sysmem.c file from our workspace. This file's code causes various issues, the project will most probably not work with it. If we remove it, it is replaced with a working version. <p>
+<p align = "center"> <img src = "images/ide_sysmem1.PNG" align = "middle" /> <img src = "images/ide_sysmem2.PNG" align = "middle" /> </p>
+<p align = "justify"> Next, let's make the appropriate changes to the STM32H750XBHX_FLASH.ld file. Add the following section to the file. </p>
 <p align = "center"> <img src = "images/ide_flashld.PNG" align = "middle" /> </p>
 
       /* Modification start */
@@ -144,21 +155,12 @@ https://chowdera.com/2022/01/202201061820128535.html
       } >RAM_D2
       /* Modification end */
 
-<p align = "justify"> These addresses correspond to the sections we have set in CORTEX_M7 in MX. You can find them specified in ethernetif.c file. </p>
-
-<p align = "justify"> The PINGREQ functionality is disabled by default. To enable it, find lwipopts.h file (lwip.h -> opt.h -> lwipopts.h) and redefine the MEMP_NUM_SYS_TIMEOUT macro as follows in the user code section 1 at the end of the file. The value of this define depends on your configuration. Generally, the PINGREQ should work if you increase the value defined in lwipopts.h by 1. My default value was 5, this is why I'm redefining it as 6. </p>
-
-    /* USER CODE BEGIN 0 */
-    #undef MEMP_NUM_SYS_TIMEOUT
-    #define MEMP_NUM_SYS_TIMEOUT 6
-	/* USER CODE END 0 */
-
-<p align = "justify"> Please remember that after extending this project these values might change. You should be aware of what modules you enable, but you can always double check yourself by finding these defines in opt.h/lwipopts.h which will always be generated based on your MX settings. </p>
-
-<p align = "justify"> Last important thing to do is to remove the sysmem.c file from the project. This file's code causes issues with code reentrancy, which invariably causes hardfault errors in this project. If we remove it it is replaced with a working version. <p>
-<p align = "center"> <img src = "images/ide_sysmem.PNG" align = "middle" /> </p>
-
-<p align = "justify"> After all this you can overwrite your project files with the files provided here. Remember to add the new MQTT folder into the include path. Build the project and run the code on your board. </p>
+<p align = "justify"> These addresses correspond to the adressess we have set for Ethernet in MX. You can find them specified in ethernetif.c file. </p>
+<p align = "justify"> For better workflow, you can include the .touchgfx file into your workspace by dragging it onto the project and selecting link to files. You can then easily launch TouchGFX from within the workspace and run them simultaneously. </p>
+<p align = "center"> <img src = "images/ide_file_operation1.PNG" align = "middle" /> <img src = "images/ide_file_operation2.PNG" align = "middle"  /> </p>
+<p align = "justify"> Now comes an important step for Keep Alive functionality. This functionality is responsible for periodically pinging the broker and receiving ping response. The cyclic timer responsible for this is set by default to be called every 5 seconds. This creates issues if we set the Keep Alive time lower than at least twice this value. We can live with it if we're fine with it, or we can set the timer to be called more frequently. To do this we have to find the lwipopts.h file. Easiest way is to go this way: main.c -> lwip.h -> opt.h -> lwipopts.h. This file contains all custom settings for LWIP. Currently there are none, but we can set the MQTT_CYCLIC_TIMER_INTERVAL here to something else than 5. Let's set it to 2. The original value is set in mqtt_opts.h, but it is protected with #ifndef so don't worry about redefinition. Now our cyclic timer should be fired every 2 seconds, which means setting Keep Alive time to 5 seconds should cause no issues. </p>
+<p align = "center"> <img src = "images/ide_cyclic_timer.PNG" align = "middle" /> </p>
+<p align = "justify"> After all this you can overwrite your project files with the files provided. It should work from the get-go. Remember to add the new MQTT folder into the include path. Build the project and run the code on your board. </p>
 
 # 4. Windows 10
 <p align = "justify"> Testing the application with static IP requires you to make some changes in your Ethernet configuration. </p>
