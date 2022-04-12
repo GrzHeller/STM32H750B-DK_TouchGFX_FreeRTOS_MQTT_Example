@@ -14,6 +14,7 @@ void ScreenMainPresenter::deactivate() {
 
 }
 
+// we call ScreenMain functions here
 void ScreenMainPresenter::setImage(uint8_t data) {
 	view.updateImage(data);
 }

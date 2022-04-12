@@ -29,6 +29,7 @@ public:
 
     virtual ~ScreenMainPresenter() {};
 
+    // overloaded functions
     void setImage(uint8_t data);
     void setStatus(uint8_t connection_status);
 

@@ -1,4 +1,3 @@
-//#include <LWIP_MQTT.h>
 #include <MQTT_Interface.h>
 #include <string.h>
 
@@ -8,17 +7,12 @@
  the topic string and use it in mqtt_incoming_data_cb
  */
 static int inpub_id;
-static void mqtt_incoming_publish_cb(void *arg, const char *topic,
-		u32_t tot_len) {
-	printf("Incoming publish at topic %s with total length %u\n", topic,
-			(unsigned int) tot_len);
-
+static void mqtt_incoming_publish_cb(void *arg, const char *topic, u32_t tot_len) {
+	printf("Incoming publish at topic %s with total length %u\n", topic, (unsigned int) tot_len);
 	/* Decode topic string into a user defined reference */
-
 	if (strcmp(topic, "print_payload") == 0) {
 		inpub_id = 0;
 	} else if (topic[0] == 'A') {
-		//HAL_GPIO_WritePin(LCD_BL_CTRL_GPIO_Port, LCD_BL_CTRL_Pin, !HAL_GPIO_ReadPin(LCD_BL_CTRL_GPIO_Port, LCD_BL_CTRL_Pin));
 		/* All topics starting with 'A' might be handled at the same way */
 		inpub_id = 1;
 	} else {
@@ -27,16 +21,16 @@ static void mqtt_incoming_publish_cb(void *arg, const char *topic,
 	}
 }
 
-static void mqtt_incoming_data_cb(void *arg, const u8_t *data, u16_t len,
-		u8_t flags) {
-	printf("Incoming publish payload with length %d, flags %u\n", len,
-			(unsigned int) flags);
+static void mqtt_incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t flags) {
+	printf("Incoming publish payload with length %d, flags %u\n", len, (unsigned int) flags);
 
 	if (flags & MQTT_DATA_FLAG_LAST) {
 		/* Last fragment of payload received (or whole part if payload fits receive buffer
 		 See MQTT_VAR_HEADER_BUFFER_LEN)  */
 
 		/* Call function or do action depending on reference, in this case inpub_id */
+
+		// Here we parse the 0 and 1 sent over MQTT
 		uint8_t *data8bit = arg;
 		if (data[0] == '1') {
 			*data8bit = '1';
@@ -66,19 +60,16 @@ static void mqtt_sub_request_cb(void *arg, err_t result) {
 	printf("Subscribe result: %d\n", result);
 }
 
-static void mqtt_connection_cb(mqtt_client_t *client, void *arg,
-		mqtt_connection_status_t status) {
+static void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection_status_t status) {
 	err_t err;
 	if (status == MQTT_CONNECT_ACCEPTED) {
 		printf("mqtt_connection_cb: Successfully connected\n");
 
 		/* Setup callback for incoming publish requests */
-		mqtt_set_inpub_callback(client, mqtt_incoming_publish_cb,
-				mqtt_incoming_data_cb, arg);
+		mqtt_set_inpub_callback(client, mqtt_incoming_publish_cb, mqtt_incoming_data_cb, arg);
 
-		/* Subscribe to a topic named "subtopic" with QoS level 1, call mqtt_sub_request_cb with result */
-		err = mqtt_subscribe(client, "test/topic", 0, mqtt_sub_request_cb,
-				arg);
+		/* Subscribe to a topic named "test/topic" with QoS level 0, call mqtt_sub_request_cb with result */
+		err = mqtt_subscribe(client, "test/topic", 0, mqtt_sub_request_cb, arg);
 		if (err != ERR_OK) {
 			printf("mqtt_subscribe return: %d\n", err);
 		}
@@ -97,28 +88,26 @@ static void mqtt_pub_request_cb(void *arg, err_t result) {
 	}
 }
 
-void interface_mqtt_connect(mqtt_client_t *client,
-		const struct mqtt_connect_client_info_t *ci, void *arg) {
-	//struct mqtt_connect_client_info_t ci;
-	err_t err;
+static void mqtt_resolved_cb(const char *name, const ip_addr_t *ipaddr, void *callback_arg) {
+	//TODO this is a callback function on dns_gehostbyname
+}
 
-	/* Setup an empty client info structure */
-	//memset(&ci, 0, sizeof(ci));
-	/* Minimal amount of information required is client identifier, so set it here */
-	//ci.client_id = "tescik";
-	//ci.keep_alive = 10;
-	//ci.will_topic = "lwip_will";
-	//ci.will_msg = "will_msg";
-	//ci.will_qos = 1;
-	//ci.will_retain = 0;
+void interface_mqtt_connect(mqtt_client_t *client, const struct mqtt_connect_client_info_t *ci, void *arg) {
+	err_t err;
 	/* Initiate client and connect to server, if this fails immediately an error code is returned
 	 otherwise mqtt_connection_cb will be called with connection result after attempting
 	 to establish a connection with the server.
 	 For now MQTT version 3.1.1 is always used */
 	ip_addr_t mqttServerIP;
-	IP4_ADDR(&mqttServerIP, 192, 168, 4, 1);
-	err = mqtt_client_connect(client, &mqttServerIP, MQTT_PORT,
-			mqtt_connection_cb, arg, ci);
+
+	/* CODE TO CHANGE BEGIN */
+	// Input the local IP of the device hosting the broker on your network below
+	err = dns_gethostbyname("192.168.1.3", &mqttServerIP, mqtt_resolved_cb, NULL);
+	// Alternatively use the below line to connect to test.mosquitto.org
+	//err = dns_gethostbyname("test.mosquitto.org", &mqttServerIP, mqtt_resolved_cb, NULL);
+	/* CODE TO CHANGE END*/
+
+	err = mqtt_client_connect(client, &mqttServerIP, MQTT_PORT, mqtt_connection_cb, arg, ci);
 
 	/* For now just print the result code if something goes wrong */
 	if (err != ERR_OK) {
@@ -131,8 +120,7 @@ void interface_mqtt_publish(mqtt_client_t *client, void *arg) {
 	err_t err;
 	u8_t qos = 0; /* 0 1 or 2, see MQTT specification */
 	u8_t retain = 0; /* No don't retain such crappy payload... */
-	err = mqtt_publish(client, "hello_world", pub_payload,
-			strlen(pub_payload), qos, retain, mqtt_pub_request_cb, arg);
+	err = mqtt_publish(client, "hello_world", pub_payload, strlen(pub_payload), qos, retain, mqtt_pub_request_cb, arg);
 	if (err != ERR_OK) {
 		printf("Publish err: %d\n", err);
 	}

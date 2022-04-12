@@ -17,8 +17,9 @@ public:
         model = m;
     }
 
-    virtual void setImage(uint8_t data);
-    virtual void setStatus(uint8_t connection_status);
+    // these functions are overloaded in ScreenMainPresenter
+    virtual void setImage(uint8_t data) {}
+    virtual void setStatus(uint8_t connection_status) {}
 
 protected:
     Model* model;

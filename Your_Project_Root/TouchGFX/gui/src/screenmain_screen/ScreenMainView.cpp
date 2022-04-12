@@ -1,11 +1,14 @@
 #include <gui/screenmain_screen/ScreenMainView.hpp>
 
+#ifndef SIMULATOR
 extern "C" {
 #include "cmsis_os2.h"
 extern osMessageQueueId_t queueSubscriptionStatusHandle;
 }
+#endif
 
-ScreenMainView::ScreenMainView() : MQTTConnectionStatus(0) {
+ScreenMainView::ScreenMainView() :
+		MQTTConnectionStatus(0) {
 
 }
 
@@ -17,6 +20,7 @@ void ScreenMainView::tearDownScreen() {
 	ScreenMainViewBase::tearDownScreen();
 }
 
+// here we change the image displayed
 void ScreenMainView::updateImage(uint8_t data) {
 	if (data == '0') {
 		ScreenMainViewBase::imageOne.setVisible(false);
@@ -29,23 +33,30 @@ void ScreenMainView::updateImage(uint8_t data) {
 	ScreenMainViewBase::imageOne.invalidate();
 }
 
-void ScreenMainView::functionSubscribe() {
+// send connect request over queue
+void ScreenMainView::functionConnect() {
+#ifndef SIMULATOR
 	MQTTConnectionStatus = 1;
 	osMessageQueuePut(queueSubscriptionStatusHandle, &MQTTConnectionStatus, 0,
 			0);
+#endif
 }
 
-void ScreenMainView::functionUnsubscribe() {
+// send disconnect request
+void ScreenMainView::functionDisconnect() {
+#ifndef SIMULATOR
 	MQTTConnectionStatus = 0;
 	osMessageQueuePut(queueSubscriptionStatusHandle, &MQTTConnectionStatus, 0,
 			0);
+#endif
 }
 
+//update text
 void ScreenMainView::updateStatus(uint8_t connection_status) {
 	if (connection_status == 1) {
-		Unicode::strncpy(textAreaBuffer, "yes", 3+1);
+		Unicode::strncpy(textAreaBuffer, "yes\0", Unicode::strlen(textAreaBuffer) + 1);
 	} else {
-		Unicode::strncpy(textAreaBuffer, "no", 2+1);
+		Unicode::strncpy(textAreaBuffer, "no\0", Unicode::strlen(textAreaBuffer) + 1);
 	}
-	textArea.invalidate();
+	invalidate();
 }
