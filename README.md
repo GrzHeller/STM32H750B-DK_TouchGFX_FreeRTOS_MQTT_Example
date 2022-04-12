@@ -1,21 +1,29 @@
 Author: Grzegorz Heller  
 Created on: 30.11.2021  
-Updated on: 04.04.2022  
-Tested and found working on: 23.12.2021  
+Updated on: 12.04.2022  
+Tested and found working on: 12.04.2022  
 
-CubeIDE version: 1.8.0  
-CubeMX version: 6.4.0  
+CubeIDE version: 1.9.0  
+CubeMX version: 6.5.0  
 TouchGFX version: 4.18.1  
 
-Video demonstration: https://youtu.be/hxHlEgOlPiU
+Video demonstration of older version of this demo: https://youtu.be/hxHlEgOlPiU
+
+# WORK IN PROGRESS
 
 # STM32H750B-DK_TouchGFX_FreeRTOS_MQTT_Example
 ## Introduction
-<p align = "justify"> This is a guide on how to create a working MQTT application with TouchGFX on STM32H750B-DK development board. This guide covers all issues I have encountered during the setup of my MQTT project so that you will hopefully be able to painlessly create a working sample project and go from there. I created this guide due to the lack of any comprehensive tutorials on MQTT for STM32H750B-DK I have found. Follow these instructions carefully and exactly as specified, otherwise you will encounter issues, for example naming conflicts or hardfaults. This guide assumes you know your way around the used tools. I won't be explaining much here. If you wish to know why I did what I did, please consult the useful links section. If you find a step unclear and do not know how to follow, find any other issues or have suggestions, feel free to contact me here: grzegorz4heller@gmail.com. </p>
+<p align = "justify"> This guide is a good starting point for creating an MQTT application with CubeIDE and TouchGFX on STM32H750B-DK development board. With adequate changes this will of course work also on other supported boards. I created this guide due to the lack of any comprehensive tutorials on MQTT for STM32H750B-DK that would work from the get-go. Due to the nature of this guide it is meant to be followed exactly as specified. This guide also assumes you know your way around the used tools, as I won't be going too in-depth. If you wish to know more, please consult the useful links section. If you find a step unclear and do not know how to follow, find any issues or have suggestions, feel free to contact me here: grzegorz4heller@gmail.com. </p>
+
+<p align = "justify"> This guide will cover: </p>
+<p align = "justify"> - creating a simple GUI in TouchGFX, </p>
+<p align = "justify"> - configuring the hardware in MX for Ethernet, LWIP and MQTT, </p>
+<p align = "justify"> - implementing very basic MQTT functionality with ability to connect to a broker and subscribe to a topic, </p>
+<p align = "justify"> - sending data between MQTT and TouchGFX tasks using queues. </p>
 
 ## Useful links
 ### STM32H750B-DK
-Official ST "tutorials" for H7:  
+Official ST tutorials for H7:  
 https://www.st.com/content/st_com/en/support/learning/stm32-education/stm32-online-training/stm32h7-online-training.html  
 
 Official ST example projects for STM32H750B-DK:  
@@ -61,52 +69,63 @@ https://github.com/eziya/STM32F4_HAL_ETH_MQTT_CLIENT
 Tutorial on LWIP MQTT by M.f.abouHASHEM:  
 https://www.youtube.com/watch?v=8P3_R6Xmhb0&t=2s  
 
+Tutorial on LWIP MQTT for STM32F407:  
+https://chowdera.com/2022/01/202201061820128535.html  
+
 # 1. TouchGFX
-Start by creating a project for STM32H750B-DK by selecting the template.  
+<p align = "justify"> Start with creating a project for STM32H750B-DK by selecting the template. As suggested in the description, the template won't work with different version of TouchGFX (I have personally tested this with TouchGFX v4.19.1, there are errors because of undefined references to new functions). </p>
 <p align = "center"> <img src = "images/tgfx_project1.PNG" align = "middle" /> <img src = "images/tgfx_project2.PNG" align = "middle"  /> </p>
-Create a similar interface.  
-<p align = "center"> <img src = "images/tgfx_interface1.PNG" align = "middle" /> </p>
-It is important to have the same resource names as here to avoid naming issues later.  
-<p align = "center"> <img src = "images/tgfx_resource_names1.PNG" align = "middle" /> </p>
-In order to get the zero and one images you have to put the attached zero.png and one.png files into your project images.  
-<p align = "center"> <img src = "images/tgfx_images1.PNG" align = "middle" /> </p>
-These two images should be hidden by default, but it is not crucial.  
-<p align = "center"> <img src = "images/tgfx_visible1.PNG" align = "middle" /> </p>
-Create a wildcard for the textArea.  
-<p align = "center"> <img src = "images/tgfx_wildcard1.png" align = "middle" /> </p>
-To prevent issues it may be necessary to put a couple characters into the wildcard typography.  
-<p align = "center"> <img src = "images/tgfx_typography1.PNG" align = "middle" /> </p>
-Create two interactions exactly like this.  
-<p align = "center"> <img src = "images/tgfx_interactions1.png" align = "middle" /> </p>
-Generate the code. If the white circle doesn't disappear after the first generation, generate again just to be safe.  
+<p align = "justify"> Create a similar interface. Don't worry about placing everything exactly as me. The background image is one of the stock images you can set from properties. It doesn't mater which one you choose. I will explain how to get the zero and one images in a moment. </p>
+<p align = "center"> <img src = "images/tgfx_interface.PNG" align = "middle" /> </p>
+<p align = "justify"> It is important to have the same resource names as here to avoid naming issues later. Remember to change the screen name too! </p>
+<p align = "center"> <img src = "images/tgfx_names.PNG" align = "middle" /> </p>
+<p align = "justify"> In order to get the zero and one images you have to put the attached zero.png and one.png files into your project images using the + button. </p>
+<p align = "center"> <img src = "images/tgfx_images.PNG" align = "middle" /> </p>
+<p align = "justify"> These two images should be hidden by default, but it is not crucial. </p>
+<p align = "center"> <img src = "images/tgfx_hidden.PNG" align = "middle" /> </p>
+<p align = "justify"> Create a wildcard for the textArea. The buffer size should be 4, because the longest word we will put into it is "yes" and we need to add one more character to it, the null terminator "\0". </p>
+<p align = "center"> <img src = "images/tgfx_wildcard.png" align = "middle" /> </p>
+<p align = "justify"> We are using the Default typography here. In order to change text on runtime, we have to edit the typography, because the necessary characters have to be generated. That's why we have to type in the Wildcard Characters we want to use on runtime. </p>
+<p align = "center"> <img src = "images/tgfx_typography.PNG" align = "middle" /> </p>
+<p align = "justify"> Create two interactions exactly like this. These functions will be auto generated in ScreenMainBase.hpp and also will be called on the respective button press. The usual routine is then to overload them in our class and implement the functionality we want. </p>
+<p align = "center"> <img src = "images/tgfx_interactions.png" align = "middle" /> </p>
+<p align = "justify"> Generate the code. </p>
+<p align = "center"> <img src = "images/tgfx_generate1.PNG" align = "middle" /> <img src = "images/tgfx_generate2.PNG" align = "middle"  /> </p>
+<p align = "justify"> Open the project folder straight from TouchGFX by clicking the Files button in lower left corner. </p>
+<p align = "center"> <img src = "images/tgfx_folder.png" align = "middle" /> </p>
+<p align = "justify"> You can now close TouchGFX. </p>
 
 # 2. CubeMX
-<p align = "justify"> Import the Cube project by going to STM32CubeIDE folder inside the root folder of your TouchGFX project and launching the .cproject or .project file. Open the .ioc file from within the workspace. The order of the following steps should not matter much. </p>
-
-<p align = "justify"> Enabling the ETHERNET module in Connectivity tab is prevented by pin conflict. This can be "fixed" by unassigning the PA2 pin labeled LCD_RESET. </p>
+<p align = "justify"> Import the Cube project by going to STM32CubeIDE folder inside the root folder of your whole project and launching the .cproject or .project file. Open the .ioc file from within the workspace. If you get prompted for migration to new version, don't do this by pressing Continue. </p>
+<p align = "center"> <img src = "images/mx_migration.PNG" align = "middle" /> </p>
+<p align = "justify"> Enabling the Ethernet module in Connectivity section is prevented by pin conflict. This can be "fixed" by unassigning the PA2 pin labeled LCD_RESET. Simply find it on the pinout view and press Reset_State. </p>
 <p align = "center"> <img src = "images/mx_gpio.PNG" align = "middle" /> </p>
-<p align = "justify"> Now we can enable ETHERNET module. Also enable Ethernet global interrupt with Preemption Priority 5. </p>
+<p align = "justify"> Now we can enable Ethernet module in the Connectivity section. Also enable Ethernet global interrupt with preemption priority 5 in the NVIC settings. </p>
 <p align = "center"> <img src = "images/mx_ethernet.PNG" align = "middle" /> </p>
 <p align = "center"> <img src = "images/mx_nvic.PNG" align = "middle" /> </p>
 <p align = "justify"> You should be careful with this module's pinout as some users reported the default one could be wrong. If you are unsure, check the datasheet/schematic of your board. Assuming you are using the same board as me, you should be fine with my settings. </p>
 <p align = "center"> <img src = "images/mx_ethernet_gpio.PNG" align = "middle" /> </p>
-<p align = "justify"> Now enter CORTEX_M7 in System Core and add these two sections. </p>
-<p align = "center"> <img src = "images/mx_cortex.PNG" align = "middle" /> </p>
-<p align = "justify"> Enable LWIP. At first I have been using static IP address as shown on the screenshot and the code provided here is written to accommodate that. However I have switched to DHCP later. If you want to follow this guide 1:1, set the static IP address of the device. Depending on your local network you might need to adjust this and remember about changing some code. </p>
-<p align = "center"> <img src = "images/mx_lwip_general.PNG" align = "middle" /> </p>
-<p align = "justify"> Set the MEM_SIZE and LWIP_RAM_HEAP_POINTER as shown below. </p>
-<p align = "center"> <img src = "images/mx_lwip_key.PNG" align = "middle" /> </p>
+<p align = "justify"> Now enter CORTEX_M7 in System Core section and add these two regions. Pay attention to MPU Region Size. </p>
+<p align = "center"> <img src = "images/mx_cortex1.PNG" align = "middle" /> </p>
+<p align = "justify"> Enable LWIP in Middlewares section. There are two routes here. The first one is the easier one - enabling DHCP. If you can use it, I see no point in not using it. The second route is setting a static IP. I will explain how to do this after explaining the DHCP. Also enable the LWIP_DNS no matter if you use DHCP or static IP. </p>
+<p align = "center"> <img src = "images/mx_lwip_general1.PNG" align = "middle" /> </p>
+<p align = "justify"> In key options, enable the Show Advanced Parameters in the top right corner. Set the MEM_SIZE and LWIP_RAM_HEAP_POINTER as shown below. </p>
+<p align = "center"> <img src = "images/mx_lwip_key1.PNG" align = "middle" /> </p>
+<p align = "justify"> This part is very important for MQTT. We have to increase the MEMP_NUM_SYS_TIMEOUT by 1 in order to enable the cyclic timer responsible for MQTT Keep Alive functionality. In my case the description says the minimal value should be 6, so I set it to 7. </p>
+<p align = "center"> <img src = "images/mx_lwip_key2.PNG" align = "middle" /> </p>
 <p align = "justify"> Set the platform. </p>
 <p align = "center"> <img src = "images/mx_lwip_platform.PNG" align = "middle" /> </p>
 <p align = "justify"> Increase the MINIMAL_STACK_SIZE of FreeRTOS just in case. </p>
 <p align = "center"> <img src = "images/mx_freertos_config.PNG" align = "middle" /> </p>
-<p align = "justify"> I prefer enabling NEWLIB to prevent the annoying warning. </p>
+<p align = "justify"> Enable USE_NEWLIB_REENTRANT. </p>
 <p align = "center"> <img src = "images/mx_freertos_newlib.PNG" align = "middle" /> </p>
 <p align = "justify"> Create three queues used to communicate between MQTT and TGFX tasks. </p>
 <p align = "center"> <img src = "images/mx_freertos_queues.PNG" align = "middle" /> </p>
 <p align = "justify"> If you want to use "Generate peripheral initialization as a pair of '.c/.h' files per peripheral" option, consult useful links section. Generate the code. </p>
 
 # 3. CubeIDE
+<p align = "justify"> Include the .touchgfx file into your workspace by dragging it onto the project and selecting link to files. </p>
+<p align = "center"> <img src = "images/ide_file_operation1.PNG" align = "middle" /> <img src = "images/ide_file_operation2.PNG" align = "middle"  /> </p>
 <p align = "justify"> This is the part which caused me the most trouble. There are three very important steps we should do first here. Firstly, let's make the appropriate changes to the FLASH.ld file. Add the following section to the file. </p>
 <p align = "center"> <img src = "images/ide_flashld.PNG" align = "middle" /> </p>
 
@@ -134,7 +153,7 @@ Generate the code. If the white circle doesn't disappear after the first generat
 
 <p align = "justify"> Please remember that after extending this project these values might change. You should be aware of what modules you enable, but you can always double check yourself by finding these defines in opt.h/lwipopts.h which will always be generated based on your MX settings. </p>
 
-<p align = "justify"> Last important thing to do is to remove the sysmem.c file from the project. This file's code causes issues with code reentrancy, which invariably causes hardfault errors in this project. <p>
+<p align = "justify"> Last important thing to do is to remove the sysmem.c file from the project. This file's code causes issues with code reentrancy, which invariably causes hardfault errors in this project. If we remove it it is replaced with a working version. <p>
 <p align = "center"> <img src = "images/ide_sysmem.PNG" align = "middle" /> </p>
 
 <p align = "justify"> After all this you can overwrite your project files with the files provided here. Remember to add the new MQTT folder into the include path. Build the project and run the code on your board. </p>
