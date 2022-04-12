@@ -84,15 +84,15 @@ https://chowdera.com/2022/01/202201061820128535.html
 <p align = "justify"> These two images should be hidden by default, but it is not crucial. </p>
 <p align = "center"> <img src = "images/tgfx_hidden.PNG" align = "middle" /> </p>
 <p align = "justify"> Create a wildcard for the textArea. The buffer size should be 4, because the longest word we will put into it is "yes" and we need to add one more character to it, the null terminator "\0". </p>
-<p align = "center"> <img src = "images/tgfx_wildcard.png" align = "middle" /> </p>
+<p align = "center"> <img src = "images/tgfx_wildcard.PNG" align = "middle" /> </p>
 <p align = "justify"> We are using the Default typography here. In order to change text on runtime, we have to edit the typography, because the necessary characters have to be generated. That's why we have to type in the Wildcard Characters we want to use on runtime. </p>
 <p align = "center"> <img src = "images/tgfx_typography.PNG" align = "middle" /> </p>
 <p align = "justify"> Create two interactions exactly like this. These functions will be auto generated in ScreenMainBase.hpp and also will be called on the respective button press. The usual routine is then to overload them in our class and implement the functionality we want. </p>
-<p align = "center"> <img src = "images/tgfx_interactions.png" align = "middle" /> </p>
+<p align = "center"> <img src = "images/tgfx_interactions.PNG" align = "middle" /> </p>
 <p align = "justify"> Generate the code. </p>
 <p align = "center"> <img src = "images/tgfx_generate1.PNG" align = "middle" /> <img src = "images/tgfx_generate2.PNG" align = "middle"  /> </p>
 <p align = "justify"> Open the project folder straight from TouchGFX by clicking the Files button in lower left corner. </p>
-<p align = "center"> <img src = "images/tgfx_folder.png" align = "middle" /> </p>
+<p align = "center"> <img src = "images/tgfx_folder.PNG" align = "middle" /> </p>
 <p align = "justify"> You can now close TouchGFX. </p>
 
 # 2. CubeMX
