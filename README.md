@@ -108,7 +108,7 @@ https://chowdera.com/2022/01/202201061820128535.html
 <p align = "center"> <img src = "images/mx_cortex.PNG" align = "middle" /> </p>
 <p align = "justify"> Enable LWIP in Middleware section. There are two routes here. The first one is the easier one - enabling DHCP. If you can use it, I see no point in not using it. The second route is setting a static IP. I will explain how to do this after explaining the DHCP. Also enable the LWIP_DNS no matter if you use DHCP or static IP. </p>
 <p align = "center"> <img src = "images/mx_lwip_general.PNG" align = "middle" /> </p>
-<p align = "justify"> In key options, enable the Show Advanced Parameters in the top right corner. Set the MEM_SIZE and LWIP_RAM_HEAP_POINTER as shown below. </p>
+<p align = "justify"> In Key Options, enable the Show Advanced Parameters in the top right corner. Set the MEM_SIZE and LWIP_RAM_HEAP_POINTER as shown below. </p>
 <p align = "center"> <img src = "images/mx_lwip_key1.PNG" align = "middle" /> </p>
 <p align = "justify"> This part is very important for MQTT. We have to increase the MEMP_NUM_SYS_TIMEOUT by 1 in order to enable the cyclic timer responsible for MQTT Keep Alive functionality. In my case the description says the minimal value should be 6, so I set it to 7. </p>
 <p align = "center"> <img src = "images/mx_lwip_key2.PNG" align = "middle" /> </p>
@@ -121,7 +121,8 @@ https://chowdera.com/2022/01/202201061820128535.html
 <p align = "justify"> Create three queues used to communicate between MQTT and TGFX tasks. </p>
 <p align = "center"> <img src = "images/mx_freertos_queues.PNG" align = "middle" /> </p>
 <p align = "justify"> I will be using generate peripheral initialization as a pair of '.c/.h' files per peripheral option and I recommend doing the same to avoid extremely large size of main.c. The code I am providing is also written with this option in mind. This however requires us to take additional action, which I will be explaining in a moment. You can also read about it in useful links section. So, before you generate the code, backup your main.c file! This file is located in Root/Core/Src folder. It is also important to note that there is a bug causing this option to be disabled randomly. Well, it isn't exactly random but I haven't found out what causes it yet. So every time you want to regenerate the code in MX, check if this option is enabled! Otherwise it will mess up your project. </p>
-<p align = "center"> <img src = "images/mx_main.PNG" align = "middle" /> <img src = "images/mx_generate.PNG" align = "middle" /> </p>
+<p align = "center"> <img src = "images/mx_main.PNG" align = "middle" /> </p>
+<p align = "center"> <img src = "images/mx_generate.PNG" align = "middle" /> </p>
 <p align = "justify"> Generate the code. You can turn off MX after. </p>
 
 # 3. CubeIDE
