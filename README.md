@@ -9,8 +9,6 @@ TouchGFX version: 4.18.1
 
 Video demonstration of older version of this demo: https://youtu.be/hxHlEgOlPiU
 
-# WORK IN PROGRESS
-
 # STM32H750B-DK_TouchGFX_FreeRTOS_MQTT_Example
 ## Introduction
 <p align = "justify"> This guide should be a good starting point for creating an MQTT application with CubeIDE and TouchGFX on STM32H750B-DK development board. With adequate changes this will of course work also on other supported boards. I created this guide due to the lack of any comprehensive tutorials on MQTT for STM32H750B-DK that would work from the get-go. Due to the nature of this guide it is meant to be followed exactly as specified. This guide also assumes you know your way around the used tools, as I won't be going too in-depth. If you wish to know more, please consult the useful links section. If you find a step unclear and do not know how to follow, find any issues or have suggestions, feel free to contact me here: grzegorz4heller@gmail.com. </p>
@@ -18,7 +16,8 @@ Video demonstration of older version of this demo: https://youtu.be/hxHlEgOlPiU
 <p align = "justify"> This guide will cover: </p>
 <p align = "justify"> - creating a simple GUI in TouchGFX, </p>
 <p align = "justify"> - configuring the hardware in MX for Ethernet, LWIP and MQTT, </p>
-<p align = "justify"> - implementing very basic MQTT functionality with ability to connect to a broker and subscribe to a topic, </p>
+<p align = "justify"> - implementing very basic MQTT functionality with ability to connect to a broker and subscribe to a topic over the unencrypted port 1883, </p>
+<p align = "justify"> - getting server IP using DNS, this way we can connect to brokers in the cloud, </p>
 <p align = "justify"> - sending data between MQTT and TouchGFX tasks using queues. </p>
 
 ## Useful links
@@ -85,7 +84,7 @@ https://chowdera.com/2022/01/202201061820128535.html
 <p align = "center"> <img src = "images/tgfx_hidden.PNG" align = "middle" /> </p>
 <p align = "justify"> Create a wildcard for the textArea. The buffer size should be 4, because the longest word we will put into it is "yes" and we need to add one more character to it, the null terminator "\0", which results in buffer length of 4. </p>
 <p align = "center"> <img src = "images/tgfx_wildcard.PNG" align = "middle" /> </p>
-<p align = "justify"> We are using the Default typography here. In order to change text on runtime, we have to edit the typography, because the necessary characters have to be generated. That's why we have to type in the Wildcard Characters we want to use on runtime. </p>
+<p align = "justify"> We are using the Default typography here. In order to change text on runtime, we have to edit the typography, because the necessary characters have to be generated. That's why we have to type in the Wildcard Characters we want to use on runtime. Since we're just using 5 characters, there is no need to input an entire range. </p>
 <p align = "center"> <img src = "images/tgfx_typography.PNG" align = "middle" /> </p>
 <p align = "justify"> Create two interactions exactly like this. These functions will be auto generated in ScreenMainBase.hpp and also will be called on the respective button press. The usual routine is then to overload them in our class and implement the functionality we want. </p>
 <p align = "center"> <img src = "images/tgfx_interactions.PNG" align = "middle" /> </p>
@@ -128,6 +127,9 @@ https://chowdera.com/2022/01/202201061820128535.html
 <p align = "justify"> Generate the code. You can turn off MX after. </p>
 
 ## Static IP
+<p align = "justify"> To enable Static IP you have to know what IP and NETMASK to choose. I cannot help you with that. My values are as follow. </p>
+<p align = "center"> <img src = "images/mx_static_ip.PNG" align = "middle" /> </p>
+<p align = "justify"> Everything else should be the same as for DHCP, except for MEMP_NUM_SYS_TIMEOUT which in my case can be now as low as 5. </p>
 
 # 3. CubeIDE
 <p align = "justify"> Try building the project right away. If you get an error like below, set a flag in properties as per the screenshot. </p>
@@ -162,13 +164,12 @@ https://chowdera.com/2022/01/202201061820128535.html
 <p align = "center"> <img src = "images/ide_file_operation1.PNG" align = "middle" /> <img src = "images/ide_file_operation2.PNG" align = "middle"  /> </p>
 <p align = "justify"> Now comes an important step for Keep Alive functionality. This functionality is responsible for periodically pinging the broker and receiving ping response. The cyclic timer responsible for this is set by default to be called every 5 seconds. It is implemented in such a way that if time on current call is higher than Keep Alive, it will send a PINGREQ packet. However, if the time on current call is higher than 1.5 * Keep Alive, it will consider the server unresponsive and disconnect. You can analyze this funcion in mqtt.c, it's called mqtt_cyclic_timer. This creates issues if we set the Keep Alive time to a low value, because the device will disconnect itself if cyclic timer is too slow. Generally low values should be unnecessary, but we will set it low in this example. To make this work we have to find the lwipopts.h file. Easiest way is to go this way: main.c -> lwip.h -> opt.h -> lwipopts.h. This file contains all custom settings for LWIP. We can set the MQTT_CYCLIC_TIMER_INTERVAL here to something else than 5. Let's set it to 1. The original value is set in mqtt_opts.h, but it is protected with #ifndef so don't worry about redefinition. Now our cyclic timer should be fired every 1 second, which means setting Keep Alive time to 4 seconds should cause no issues. You can also notice that the MEMP_NUM_SYS_TIMEOUT alongside other variables we have set in MX is also defined in this file. </p>
 <p align = "center"> <img src = "images/ide_cyclic_timer.PNG" align = "middle" /> </p>
-<p align = "justify"> After all this you can overwrite your project files with the files provided. It should work from the get-go. Remember to add the new MQTT folder into the include path. Build the project and run the code on your board. </p>
+<p align = "justify"> After all this you can overwrite your project files with the files provided. It should work almost from the get-go, you just have to input the local IP of the device hosting the broker on your network in MQTT_Interface.c file (if you run it on your PC, it's your PC's IP). Look for a section called CODE TO CHANGE. Remember to add the new MQTT folder into the include path. Build the project and run the code on your board. </p>
+<p align = "center"> <img src = "images/ide_ip.PNG" align = "middle" /> </p>
 <p align = "center"> <img src = "images/ide_include_path.PNG" align = "middle" /> </p>
 
-## Static IP
-
 # 4. Testing
-<p align = "justify"> You have to have Mosquitto installed to test the device now. Alternatively you can go into MQTT_Interface.c and comment/uncomment adequate code sections to connect to test.mosquitto.org if you have a way of testing the connection there. You can write some code to publish a message and receive it on another subscribed client, for example MQTT Explorer. Testing the application should be simple. Just plug in the device into your router and press the Connect button. Your Mosquitto should display something like below. </p>
+<p align = "justify"> You have to have Mosquitto installed to test the device now. Alternatively you can go into MQTT_Interface.c and comment/uncomment adequate code sections to connect to test.mosquitto.org if you have a way of testing the connection there. You can write some code to publish a message and receive it on another subscribed client, for example MQTT Explorer. Testing the application should be simple. Just plug in the device into your router and press the Connect button. Your Mosquitto should display something like below. There might be a slight delay in response - the LWIP takes it's time to initialize. </p>
 <p align = "center"> <img src = "images/test_connect.PNG" align = "middle" /> </p>
 <p align = "justify"> After a couple of seconds you should see ping activity. </p>
 <p align = "center"> <img src = "images/test_ping.PNG" align = "middle" /> </p>
@@ -176,6 +177,9 @@ https://chowdera.com/2022/01/202201061820128535.html
 <p align = "center"> <img src = "images/test_disconnect.PNG" align = "middle" /> </p>
 <p align = "justify"> I have also provided my Mosquitto configuration file. To run Mosquitto with a configuration file, open CMD and navigate to your Mosquitto installation folder, then use this command with the path to your configuration file: <br>
 mosquitto -c d:\mosquitto\configuration.conf -v </p>
+<p align = "justify"> If you have another MQTT client, you can publish 0 or 1 to test/topic to change the displayed image. I am using MQTT Explorer like below. </p>
+<p align = "center"> <img src = "images/test_publish.PNG" align = "middle" /> </p>
+<p align = "justify"> If you don't have direct access to your router, you can use your PC's LAN port. This should work this way too, however you will have to change some settings on your PC regarding Internet sharing, and possibly open MQTT port 1883 in Firewall. However I cannot at the moment confirm this works. </p>
 
 # 5. Conclusion
-<p align = "justify"> Hopefully you now have a very basic, but working device utilising MQTT communication. You can now analyse the code and extend the project to suit your needs. </p>
+<p align = "justify"> Hopefully you now have a very basic, but working device utilising MQTT communication. You can now analyse the code and extend the project to suit your needs. I have added some simple comments here and there to help you with this. </p>
