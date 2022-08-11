@@ -7,7 +7,7 @@ CubeIDE version: 1.9.0
 CubeMX version: 6.5.0  
 TouchGFX version: 4.18.1  
 
-Video demonstration of older version of this demo: https://youtu.be/hxHlEgOlPiU
+Video demonstration of older version of this demo: https://youtu.be/hxHlEgOlPiU  
 Whole project can be downloaded here: https://drive.google.com/drive/folders/13r3FWRnNvuflUSJvquDRaZE2PDdSE8un
 
 # STM32H750B-DK_TouchGFX_FreeRTOS_MQTT_Example
